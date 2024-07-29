@@ -11,11 +11,7 @@ if (!CLIENT_EMAIL || !PRIVATE_KEY) {
   process.exit(1);
 }
 
-// Log environment variables for debugging (exclude sensitive data)
-console.log(`CLIENT_EMAIL: ${CLIENT_EMAIL}`);
-console.log(`PRIVATE_KEY: ${PRIVATE_KEY}`);
 
-// Replace escaped newlines with actual newlines in the private key
 const formattedPrivateKey = PRIVATE_KEY.replace(/\\n/g, '\n');
 
 const auth = new google.auth.JWT({
