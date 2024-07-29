@@ -6,6 +6,18 @@ dotenv.config();
 const CLIENT_EMAIL : string = process.env.CLIENT_EMAIL as string;
 const PRIVATE_KEY : string = process.env.PRIVATE_KEY as string;
 
+if (!CLIENT_EMAIL || !PRIVATE_KEY) {
+  console.error('Missing CLIENT_EMAIL or PRIVATE_KEY in environment variables.');
+  process.exit(1);
+}
+
+// Log environment variables for debugging (exclude sensitive data)
+console.log(`CLIENT_EMAIL: ${CLIENT_EMAIL}`);
+console.log(`PRIVATE_KEY: ${PRIVATE_KEY}`);
+
+// Replace escaped newlines with actual newlines in the private key
+const formattedPrivateKey = PRIVATE_KEY.replace(/\\n/g, '\n');
+
 const auth = new google.auth.JWT({
   email: CLIENT_EMAIL,
   key: PRIVATE_KEY,
