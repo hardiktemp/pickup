@@ -9,6 +9,13 @@ const router = Express.Router();
 router.post('/update', async (req, res) => {
     const orders = await Order.find({ labelPrinted: false, status: { $in: ["completed", "manualComplete"] } });
     // console.log(orders);
+    // const orders = [];
+    // for (let i = 0 ; i<1000 ; i++){
+    //     let order= {
+    //         orderNo : i
+    //     }
+    //     orders.push(order)
+    // }
     let data = [];
     let count = 1;
     let str = ""
@@ -18,13 +25,13 @@ router.post('/update', async (req, res) => {
         if (count == 500){
             str = str.slice(0, -1);
             console.log(str);
-            data.push([str]);
+            data.push([str,count-1]);
             str = ""
             count = 1;
         }
     });
     str = str.slice(0, -1);
-    data.push([str]);
+    data.push([str,count-1]);
     appendToSheet("16GeK7HF6FatEAhsyUCKCZdxyROdpyCF6LbWbllLuMTk", "AppLabels!A1", data);
 
     await Order.updateMany({ labelPrinted: false, status: { $in: ["completed", "manualComplete"] } }, { labelPrinted: true })
