@@ -181,9 +181,9 @@ function SelectV2() {
                     theme="dark"
                 />
                     <div>
-                    <p className="m-5">Serach Order</p>
+                    <p className="m-5">Search Order</p>
                     <input type="text" value={searchOrder} onChange={(e) => setSearchOrder(e.target.value)} />
-                    <button onClick={search} className="m-2 p-3">Serach</button>
+                    <button onClick={search} className="m-2 p-3">Search</button>
                     </div>
                  
 
