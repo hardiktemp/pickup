@@ -45,6 +45,12 @@ router.post('/order',authMiddleware, async (req, res) => {
         assignedTo : "null"
     };
     let order : any = {};
+    let assignedOrders = await Order.findOne({assignedTo: req.phoneNumber});
+        if (assignedOrders){    
+            console.log("Unassigning order", assignedOrders.orderNo);
+            assignedOrders.assignedTo = "null";
+            await assignedOrders.save();
+        }
     if (req.body.orderType === "Prepaid" || req.body.orderType === "Postpaid" || req.body.orderType === "Both") {
         query.fulfilledOn = "null";
         
