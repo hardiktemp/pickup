@@ -65,7 +65,7 @@ router.post('/order',authMiddleware, async (req, res) => {
 
         if (req.body.yesterday == 'true') {
             const now = new Date();
-            const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 18, 29, 0);
+            const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 23, 29, 0);
             console.log("yesterdayMidnight",yesterday.toISOString());
             query.orderedAt = { $lt : yesterday.toISOString() }
             
@@ -383,6 +383,19 @@ router.post("/search", async (req, res) => {
     }
 })
 
+
+router.post("/data", async (req, res) => {
+    let query: any = {
+        status: "pending",
+        assignedTo : "null",
+        fulfilledOn : "null"
+    };
+    const orders = await Order.find({status: "pending", assignedTo : "null",fulfilledOn : "null"});
+    console.log(orders.length);
+    let defaultOrder = await Variable.findOne({id : 1});
+    console.log(defaultOrder);
+    res.status(200).json({len : orders.length , defaultOrder : defaultOrder.startId});
+});
 
 
 export default router;

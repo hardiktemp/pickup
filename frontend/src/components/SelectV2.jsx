@@ -21,6 +21,7 @@ function SelectV2() {
     const [searchOrder, setSearchOrder] = useState('')
     const [searchScreen , setSearchScreen] = useState(false)
     const [searchComplete , setSearchComplete] = useRecoilState(completeOrderNo)
+    const [data, setData] = useState(null);
 
     const handleExport = () => {
         setExportScreen(true)
@@ -47,22 +48,16 @@ function SelectV2() {
         localStorage.removeItem('token');
         navigate('/login');
     };
-    
-    // Function to validate and update the 'from' and 'to' values before proceeding
     const validateAndNavigate = (isPrepaidOption) => {
-        // Parse the values to ensure they are treated as numbers
         let fromVal = parseInt(fromValue, 10);
         let toVal = parseInt(toValue, 10);
         localStorage.setItem('from', fromVal);
         localStorage.setItem('to', toVal);
-        // Check and set default for 'from' if not provided or invalid
         if (isNaN(fromVal)) {
             fromVal = 0;
-            setFrom(0); // Update the 'from' state with the default value
-            localStorage.setItem('from', 0); // Store the 'from' value in local storage
+            setFrom(0); 
+            localStorage.setItem('from', 0); 
         }
-
-        // Check and set default for 'to' if not provided or invalid
         if (isNaN(toVal) || toVal === 0) {
             toVal = 99999999;
             setTo(99999999); // Update the 'to' state with the default value
@@ -150,6 +145,17 @@ function SelectV2() {
             setExportScreen(false)
         }
     }
+
+    useEffect(() => {
+        const fetchData = async () => {
+          
+        const response = await axios.post(`${API_URL}/api/v1/order/data`)
+        console.log(response.data);
+        setData(response.data);
+        setUpdateFrom(response.data.defaultOrder)
+        };
+        fetchData();
+    }, []);
 
     return (
         <div>
@@ -317,6 +323,11 @@ function SelectV2() {
                 )}
             </div>
         </div>
+        {data != null ? (
+        <p>Remaining orders: {data.len}</p>
+      ) : (
+        <p>No data available</p>
+      )}
         </div>
     );
 }
