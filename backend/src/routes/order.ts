@@ -45,16 +45,17 @@ router.post('/order',authMiddleware, async (req, res) => {
         assignedTo : "null"
     };
     let order : any = {};
-    let assignedOrders = await Order.findOne({assignedTo: req.phoneNumber});
-        if (assignedOrders){    
-            console.log("Unassigning order", assignedOrders.orderNo);
-            assignedOrders.assignedTo = "null";
-            await assignedOrders.save();
+    let assignedOrders = await Order.find({assignedTo: req.phoneNumber});
+    if (assignedOrders){
+        for (const assignedOrder of assignedOrders){
+            console.log("Unassigning order", assignedOrder.orderNo);
+            
+            assignedOrder.assignedTo = "null";
+            await assignedOrder.save();
         }
+    }
     if (req.body.orderType === "Prepaid" || req.body.orderType === "Postpaid" || req.body.orderType === "Both") {
         query.fulfilledOn = "null";
-        
-        // unassigned orders
 
         let assignedOrders = await Order.findOne({assignedTo: req.phoneNumber});
         if (assignedOrders){    
@@ -142,6 +143,10 @@ router.post('/order',authMiddleware, async (req, res) => {
 
 router.post("/updateOrders2", async (req, res) => {
     console.log("updateOrders2");    
+    var s = new Date().toLocaleString(undefined, {timeZone: 'Asia/Kolkata'});
+    console.log(s);
+    await Variable.findOneAndUpdate({id:1},{lastRefreshed : s});
+    
     let moreOrders = true;
     let startOrderNo : any
     if (req.body.from === null || req.body.from === undefined){
@@ -385,16 +390,11 @@ router.post("/search", async (req, res) => {
 
 
 router.post("/data", async (req, res) => {
-    let query: any = {
-        status: "pending",
-        assignedTo : "null",
-        fulfilledOn : "null"
-    };
     const orders = await Order.find({status: "pending", assignedTo : "null",fulfilledOn : "null"});
     console.log(orders.length);
     let defaultOrder = await Variable.findOne({id : 1});
     console.log(defaultOrder);
-    res.status(200).json({len : orders.length , defaultOrder : defaultOrder.startId});
+    res.status(200).json({len : orders.length , defaultOrder : defaultOrder.startId , lastRefreshed : defaultOrder.lastRefreshed});
 });
 
 

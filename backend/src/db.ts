@@ -91,6 +91,9 @@ const ordersSchema = new mongoose.Schema({
 const variableSchema = new mongoose.Schema({
   startId : {
     type : Number  
+  },
+  lastRefreshed : {
+    type : String
   }
 });
 

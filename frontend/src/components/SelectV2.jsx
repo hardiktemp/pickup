@@ -313,6 +313,11 @@ function SelectV2() {
                         <p className="m-5">Update from</p>
                         <input type="text" value={updateFrom} onChange={(e) => setUpdateFrom(e.target.value)} />
                         <button onClick={update} className="m-5">Update</button>
+                        {data != null ? (
+                            <p>Last Refreshed : {data.lastRefreshed}</p>
+                        ) : (
+                            <p>No data available</p>
+                        )}
                         </div>
                         : 
                         <h2 className="text-2xl font-bold mb-2 text-white2">Refreshing</h2>
