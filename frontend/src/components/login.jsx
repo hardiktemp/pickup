@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios, { formToJSON } from "axios";
 import { API_URL } from "../config.js";
+import { ToastContainer, toast } from 'react-toastify';
 
 function Login() {
   // State for phoneNumber and password
@@ -28,6 +29,7 @@ function Login() {
       window.location.href = "/";
     } catch (error) {
       console.error("Login failed:", error);
+      toast.error('invalid credentials');
       // Handle login failure (e.g., showing an error message)
     }
   };
@@ -90,6 +92,18 @@ function Login() {
           </div>
         </form>
       </div>
+      <ToastContainer
+                    position="top-right"
+                    autoClose={5000}
+                    hideProgressBar={false}
+                    newestOnTop={false}
+                    closeOnClick
+                    rtl={false}
+                    pauseOnFocusLoss
+                    draggable
+                    pauseOnHover
+                    theme="dark"
+                />
     </div>
   );
 }

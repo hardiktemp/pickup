@@ -60,8 +60,6 @@ router.post("/updateSkipped", async (req, res) => {
             productString = productString.slice(0, -1);
         }
         orderData.push(productString);
-        orderData.push("");
-        orderData.push("");
         orderData.push(order.skipReason);
         console.log(orderData);
         data.push(orderData);

@@ -16,8 +16,9 @@ const loginZod = zod.object({
 
 router.post('/checkToken', async (req, res) => {
     const token = req.body.token;
+    console.log(token);
     if (!token){
-        res.status(200).json({ message: "Invalid token" , statusNum: 0});
+        res.status(201).json({ message: "Invalid token" , statusNum: 0});
         return;
     }
     try{
@@ -25,7 +26,7 @@ router.post('/checkToken', async (req, res) => {
         res.status(200).json({ phoneNumber : decoded.phoneNumber , statusNum: 1});
     }
     catch(err){
-        res.status(401).json({ message: "Invalid token" });
+        res.status(201).json({ message: "Invalid token" , statusNum: 0 });
     }
 });
 

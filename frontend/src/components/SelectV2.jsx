@@ -23,6 +23,28 @@ function SelectV2() {
     const [searchComplete , setSearchComplete] = useRecoilState(completeOrderNo)
     const [data, setData] = useState(null);
 
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            navigate('/login');
+        }
+        async function checkToken() {
+            try {
+                const response = await axios.post(`${API_URL}/api/v1/user/checkToken`, { token });
+                if (response.data.statusNum === 1) {
+                    console.log('Token is valid');
+                } else {
+                    console.log('Token is invalid');
+                    navigate('/login');
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        }
+        checkToken();
+    }, []);
+    
+    
     const handleExport = () => {
         setExportScreen(true)
     };
