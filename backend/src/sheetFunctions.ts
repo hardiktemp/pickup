@@ -22,7 +22,7 @@ const auth = new google.auth.JWT({
 
 const sheets = google.sheets({ version: 'v4', auth });
 
-export const appendToSheet = async (spreadsheetId: string, range: string, values: any[][]) => {
+const appendToSheet = async (spreadsheetId: string, range: string, values: any[][]) => {
   try {
     await sheets.spreadsheets.values.append({
       spreadsheetId,
@@ -39,3 +39,26 @@ export const appendToSheet = async (spreadsheetId: string, range: string, values
 };
 
 
+const readFirstRow = async (spreadsheetId: string, range: string) => {
+  try {
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range,
+    });
+
+    const rows = response.data.values;
+    if (rows && rows.length > 0) {
+      const firstRow = rows[0];
+      // console.log('First row data:', firstRow);
+      return firstRow;
+    } else {
+      console.log('No data found.');
+      return [];
+    }
+  } catch (error) {
+    console.error('Error reading data:', error);
+    return [];
+  }
+};
+
+export {appendToSheet , readFirstRow};

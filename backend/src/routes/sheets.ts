@@ -1,6 +1,6 @@
 import Express from "express";
 import { User , Order} from "../db";
-import { appendToSheet } from "../sheetFunctions";
+import { appendToSheet, readFirstRow } from "../sheetFunctions";
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -46,28 +46,45 @@ router.post("/updateSkipped", async (req, res) => {
 
     let data = [];
 
+    const firstRow = await readFirstRow("16GeK7HF6FatEAhsyUCKCZdxyROdpyCF6LbWbllLuMTk", "AppSkipped!A1:K1");
+       
     orders.forEach((order) => {
-        let orderData = [];
-        orderData.push(new Date().toString());
-        orderData.push(order.orderNo);
-        let productString = ""
-        for (let i = 0; i < order.productStatus.length; i++) {
-            if (order.productStatus[i].quantity > order.productStatus[i].completionStatus) {
-                productString +=  order.productStatus[i].sku + ","
+        let orderData = firstRow.map((header) => {
+            switch (header) {
+                case "Push Time":
+                    return new Date().toLocaleString(undefined, { timeZone: 'Asia/Kolkata' });
+    
+                case "Order ID":
+                    return order.orderNo;
+    
+                case "Items Missing":
+                    let missingItems = order.productStatus
+                        .filter(item => item.quantity > item.completionStatus)
+                        .map(item => item.sku)
+                        .join(",");
+                    return missingItems;
+    
+                case "SkipReason":
+                    return order.skipReason;
+    
+                default:
+                    return ""; 
             }
-        }
-        if (productString.length > 0) {
-            productString = productString.slice(0, -1);
-        }
-        orderData.push(productString);
-        orderData.push(order.skipReason);
+        });
+    
         console.log(orderData);
         data.push(orderData);
     });
     console.log(data);
-    await appendToSheet("16GeK7HF6FatEAhsyUCKCZdxyROdpyCF6LbWbllLuMTk", "AppSkipped!A1", data);
-
-    await Order.updateMany({ status : "skipped" , skipExported : false }, { skipExported : true  , labelPrinted : true});
+    try {
+        await appendToSheet("16GeK7HF6FatEAhsyUCKCZdxyROdpyCF6LbWbllLuMTk", "AppSkipped!A1", data);
+        
+        await Order.updateMany({ status: "skipped", skipExported: false }, { skipExported: true, labelPrinted: true });
+        console.log("Order status updated successfully.");
+    } catch (error) {
+        console.error("Error occurred:", error);
+    }
+    
 
     res.status(200).json({ status : 200 , message: "Data updated successfully" });
 
