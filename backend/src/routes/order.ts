@@ -54,81 +54,96 @@ router.post('/order',authMiddleware, async (req, res) => {
             await assignedOrder.save();
         }
     }
-    if (req.body.orderType === "Prepaid" || req.body.orderType === "Postpaid" || req.body.orderType === "Both") {
-        query.fulfilledOn = "null";
+    let retryCount = 0;
+    let products : any = [];
+    while(retryCount < 5){
+        if (req.body.orderType === "Prepaid" || req.body.orderType === "Postpaid" || req.body.orderType === "Both") {
+            query.fulfilledOn = "null";
 
-        let assignedOrders = await Order.findOne({assignedTo: req.phoneNumber});
-        if (assignedOrders){    
-            console.log("Unassigning order", assignedOrders.orderNo);
-            assignedOrders.assignedTo = "null";
-            await assignedOrders.save();
+            let assignedOrders = await Order.findOne({assignedTo: req.phoneNumber});
+            if (assignedOrders){    
+                console.log("Unassigning order", assignedOrders.orderNo);
+                assignedOrders.assignedTo = "null";
+                await assignedOrders.save();
+            }
+
+            if (req.body.yesterday == 'true') {
+                const now = new Date();
+                const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 23, 29, 0);
+                console.log("yesterdayMidnight",yesterday.toISOString());
+                query.orderedAt = { $lt : yesterday.toISOString() }
+                
+            }
+            if (req.body.orderType === "Prepaid") {
+                query.prepaid = true;
+            } else if (req.body.orderType === "Postpaid") {
+                query.prepaid = false;
+            }
+            order = await Order.findOneAndUpdate(query, update, options);
+            if (!order){
+                res.status(200).json({message : "No pending orders" , messageStatus: 0});
+                return;
+            }
         }
+        else if (req.body.orderType === "Skipped") {    
+            query.status = "skipped";
+            order = await Order.findOneAndUpdate(query , update, options);
+            if (!order){
+                res.status(200).json({message : "No skipped orders" , messageStatus: 0});
+                return;
+            }
+        }
+        else{
+            console.log("Invalid order type");
+            return res.status(400).json({ message: "Invalid order type" });
+        }      
 
-        if (req.body.yesterday == 'true') {
-            const now = new Date();
-            const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 23, 29, 0);
-            console.log("yesterdayMidnight",yesterday.toISOString());
-            query.orderedAt = { $lt : yesterday.toISOString() }
+        console.log("query",query);
+        
+        
+        const orderId = order.id;
+        
+        const orderDetails = await axios.get(`https://${SHOPIFY_API_KEY}/admin/api/2024-04/orders/${orderId}.json`);
+
+        const lineItems = orderDetails.data.order.line_items;
+
+        for (const lineItem of lineItems) {
+            const productId = lineItem.product_id;
+            if (productId === null) {
+                continue;
+            }
+            const currernt_quantity = lineItem.current_quantity;
+            if (currernt_quantity === 0) {
+                continue;
+            }
+            const product = await axios.get(`https://${SHOPIFY_API_KEY}/admin/api/2024-04/products/${productId}.json`);
+
+            const p = (order.productStatus).find((product) => {
+                return product.productId == lineItem.product_id
+            });
+
+            products.push({
+                name: product.data.product.title,
+                productId: lineItem.product_id,
+                sku: lineItem.sku,
+                quantity: currernt_quantity,
+                image: product.data.product.image !== null && product.data.product.image.src !== null ? product.data.product.image.src : "null",
+                completionStatus: p.completionStatus
+            });
+
+        }
+        if (products.length > 0){
+            break;
+        }else{
+            const orderToCancel = await Order.findOne({orderNo : order.orderNo});
+            orderToCancel.assignedTo = "null";
+            orderToCancel.fulfilledOn = "cancelled";
+            await orderToCancel.save();
+            retryCount++;
             
         }
-        if (req.body.orderType === "Prepaid") {
-            query.prepaid = true;
-        } else if (req.body.orderType === "Postpaid") {
-            query.prepaid = false;
-        }
-        order = await Order.findOneAndUpdate(query, update, options);
-        if (!order){
-            res.status(200).json({message : "No pending orders" , messageStatus: 0});
-            return;
-        }
     }
-    else if (req.body.orderType === "Skipped") {    
-        query.status = "skipped";
-        order = await Order.findOneAndUpdate(query , update, options);
-        if (!order){
-            res.status(200).json({message : "No skipped orders" , messageStatus: 0});
-            return;
-        }
-    }
-    else{
-        console.log("Invalid order type");
-         return res.status(400).json({ message: "Invalid order type" });
-    }      
 
-    console.log("query",query);
-    
-    let products : any = [];
-    const orderId = order.id;
-    
-    const orderDetails = await axios.get(`https://${SHOPIFY_API_KEY}/admin/api/2024-04/orders/${orderId}.json`);
-
-    const lineItems = orderDetails.data.order.line_items;
-
-    for (const lineItem of lineItems) {
-        const productId = lineItem.product_id;
-        if (productId === null) {
-            continue;
-        }
-        const currernt_quantity = lineItem.current_quantity;
-        if (currernt_quantity === 0) {
-            continue;
-        }
-        const product = await axios.get(`https://${SHOPIFY_API_KEY}/admin/api/2024-04/products/${productId}.json`);
-
-        const p = (order.productStatus).find((product) => {
-            return product.productId == lineItem.product_id
-        });
-
-        products.push({
-            name: product.data.product.title,
-            productId: lineItem.product_id,
-            sku: lineItem.sku,
-            quantity: currernt_quantity,
-            image: product.data.product.image !== null && product.data.product.image.src !== null ? product.data.product.image.src : "null",
-            completionStatus: p.completionStatus
-        });
-
-    }
     const data = {
         orderId : order.orderNo,
         products : products,
