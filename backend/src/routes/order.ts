@@ -87,6 +87,7 @@ router.post('/order',authMiddleware, async (req, res) => {
         }
         else if (req.body.orderType === "Skipped") {    
             query.status = "skipped";
+            query.skipExported = false;
             order = await Order.findOneAndUpdate(query , update, options);
             if (!order){
                 res.status(200).json({message : "No skipped orders" , messageStatus: 0});
@@ -314,7 +315,27 @@ router.post('/submit', authMiddleware ,  async (req, res) => {
     order.fulfilledBy = req.phoneNumber;
     order.fulfillmentTime = new Date();
     order.assignedTo = "null";
-    await order.save();
+    let saveSuccess = false;
+    const maxSaveRetries = 3;
+    let retryCount = 0;
+
+    while (!saveSuccess && retryCount < maxSaveRetries) {
+        try {
+            await order.save();
+            saveSuccess = true;
+        } catch (error) {
+            console.error(`Failed to save order on attempt ${retryCount + 1}:`, error);
+            retryCount++;
+
+            if (retryCount >= maxSaveRetries) {
+                console.error("Exceeded maximum retries to save order.");
+                res.status(500).json({ message: "Failed to save order after multiple attempts" });
+                return;
+            }
+
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+    }
 
     res.status(200).json({ message: "Order updated" , status:1});
 });
