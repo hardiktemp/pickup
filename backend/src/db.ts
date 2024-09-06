@@ -135,16 +135,72 @@ const ProductOrderedSchema = new mongoose.Schema({
   }
 });
 
+const orderDetailSchema = new mongoose.Schema({
+  orderId:{
+    type: mongoose.Schema.Types.ObjectId,
+    required:true,
+    unique:true
+  },
+  items:[{
+    itemId : {
+      type : String,
+      required : true
+    },
+    name: {
+      type: String,
+      required: true
+    },
+    quantity: {
+      type: Number,
+      required: true
+    },
+    price: {
+      type: Number,
+      required: true
+    }
+  }],
+  orderDate: {
+    type: Date,
+    required: true
+  },
+  paymentMethod: {
+    type: String,
+    enum: ['prepaid', 'COD'], 
+    required: true
+  },
+  fulfillmentStatus: {
+    type: String,
+    enum: ['fulfilled', 'pending', 'shipped', 'cancelled'],
+    required: true
+  },
+  discount:{
+    code: {
+      type: String
+    },
+    amount: {
+      type: Number
+    }
+  },
+  return:{
+    type: {
+      type: String, 
+      enum: ['RTO', 'return'],
+    },
+    reason: {
+      type: String,
+    },
+    status: {
+      type: String,
+      enum: ['completed', 'pending', 'rejected'],
+    }
+  }
+})
+
 export const User = mongoose.model("User", UserSchema);
+export const UpdateOrder = mongoose.model("UpdateOrder", orderDetailSchema);
 export const Order = mongoose.model("Order", ordersSchema);
 export const ProductOrdered = mongoose.model("ProductOrdered" , ProductOrderedSchema);
 export const Product = mongoose.model("Product", productShema);
 export const Variable = mongoose.model("Variable", variableSchema);
 
 Order.init().catch(err => console.error('Index creation error:', err));
-
-// export = {
-//   Order,
-//   ProductOrdered,
-//   Product
-// }
