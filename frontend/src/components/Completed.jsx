@@ -78,12 +78,14 @@ function Completed() {
                 {skippedOrderData.bagId ? <p className='m-5'>Bag ID : {skippedOrderData.bagId}</p> : null}
                 : null
             } */}
+            {dataFetched && skippedOrderData && skippedOrderData.skipReason ? <p className='m-2'>Skipped Order</p> : null}
+            {dataFetched && skippedOrderData && skippedOrderData.skipReason ? <p className='m-2'>skipReason : {skippedOrderData.skipReason}</p> : null}
             {dataFetched && skippedOrderData && skippedOrderData.fulfilledOn ? <p className='m-2'>fulfilled on : {skippedOrderData.fulfilledOn}</p> : null}
             {dataFetched && skippedOrderData && skippedOrderData.bagId ? <p className='m-2'>bagId : {skippedOrderData.bagId}</p> : null}
             {dataFetched && skippedOrderData && skippedOrderData.fulfilledBy ? <p className='m-2'>fulfilled By : {skippedOrderData.fulfilledBy}</p> : null}
             {dataFetched && skippedOrderData && skippedOrderData.fulfillmentTime ? <p className='m-2'>fulfillment time : {new Date(skippedOrderData.fulfillmentTime).toLocaleString('en-US', options)}</p> : null}
             {dataFetched && skippedOrderData ? (
-            skippedOrderData.labelPrinted !== undefined ? (
+            skippedOrderData.labelPrinted !== undefined  && !skippedOrderData.skipReason? (
                 skippedOrderData.labelPrinted ? (
                 <p className='m-2'>Label Printed</p>
                 ) : (

@@ -66,7 +66,10 @@ router.post("/updateSkipped", async (req, res) => {
     
                 case "SkipReason":
                     return order.skipReason;
-    
+                
+                case "Phone Number":
+                    return order.customerPhoneNumber;
+                
                 default:
                     return ""; 
             }
@@ -79,7 +82,7 @@ router.post("/updateSkipped", async (req, res) => {
     try {
         await appendToSheet("16GeK7HF6FatEAhsyUCKCZdxyROdpyCF6LbWbllLuMTk", "AppSkipped!A1", data);
         
-        await Order.updateMany({ status: "skipped", skipExported: false }, { skipExported: true, labelPrinted: true });
+        await Order.updateMany({ status: "skipped", skipExported: false }, { skipExported: true, labelPrinted: true, status: "manualComplete" });
         console.log("Order status updated successfully.");
     } catch (error) {
         console.error("Error occurred:", error);

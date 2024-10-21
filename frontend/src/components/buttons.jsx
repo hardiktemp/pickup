@@ -17,6 +17,7 @@ const Buttons = () => {
     const [selectedAnswer, setSelectedAnswer] = useState('');
     const [bagIdReqValue , setBagIdReqValue] = useRecoilState(bagIdReq);
     const [isLoading , setIsLoading] = useState(false);
+    const [orderType, setOrderType] = useState(localStorage.getItem("selectedOption"));
 
     const reset = () => {
         setBagValue('');
@@ -48,12 +49,11 @@ const Buttons = () => {
         if(response.data.messageStatus == 0){
             console.log("sfefsf:,",response.data.messageStatus)
             setOrderDetailsData({orderId : "No Order",paymentStatus : "No Order",products : []})
+            return false
           }else{
-                // for (const product of response.data.products){
-                //     product.completionStatus = 0;
-                // }
                 setOrderDetailsData(response.data);
           }
+          return true
     }
 
     const skip = async (e) => {
@@ -117,9 +117,18 @@ const Buttons = () => {
         setSelectedAnswer(event.target.value);
       };
 
-    // const handelDebug = () => {
-    //     console.log(orderDetailsData);
-    // }
+    const next = async () => {
+        let fromL = orderDetailsData.orderId;
+        localStorage.setItem("from",fromL + 1)
+        reset()
+        const result = await dataFetch()
+        console.log('next data fetch done' , orderDetailsData.orderId);
+        if(!result){
+            localStorage.setItem("from",0)
+            await dataFetch()
+        }
+    }
+
     const forceComplete = async () => {
         const respone = await axios({method : 'post', url : `${API_URL}/api/v1/order/submit`,data: {
             orderId : orderId,
@@ -145,6 +154,11 @@ const Buttons = () => {
             </div>: 
             <div className="flex justify-around my-5">
                 <button onClick={skip}>Skip</button>
+                {
+                    orderType === "Skipped" ?
+                        <button onClick={next}>Next</button>:
+                        <></>
+                }
                 <button onClick={submit}>Submit</button>
             </div> 
         }

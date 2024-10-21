@@ -91,10 +91,6 @@ function SelectV2() {
             alert('The "to" value must be greater than the "from" value.');
         }
     };
-
-    const refreshOrders = async () => {
-        setUpadteLoading(true)        
-    }
     const update = async () => {
         setUpdateing(true)
         const response = await axios.post(`${API_URL}/api/v1/order/updateOrders2` , {from : updateFrom});
@@ -171,19 +167,23 @@ function SelectV2() {
     useEffect(() => {
         const fetchData = async () => {
           
-        const response = await axios.post(`${API_URL}/api/v1/order/data`)
-        console.log(response.data);
+        const response = await axios.post(`${API_URL}/api/v1/order/data`, {},{headers : { Authorization: `Bearer ${localStorage.getItem('token')}`}});
+        // console.log(response.data);
         setData(response.data);
         setUpdateFrom(response.data.defaultOrder)
+        
         };
         fetchData();
     }, []);
 
     return (
         <div>
-        <button onClick={logout} className="absolute top-3 right-3">Logout</button>
-        <button onClick={handleExport} className="absolute top-3 right-28">Export</button>
-        <button onClick={()=> setSearchScreen(true)} className="absolute top-3 right-52">Search</button>
+        <nav className="flex justify-between sm:justify-end h-16 items-center p-2">
+            {data != null ? <div className="sm:m-2">{data.phone}</div> : <div></div>}
+            <button onClick={logout} className="sm:m-2">Logout</button>
+            <button onClick={handleExport} className="sm:m-2">Export</button>
+            <button onClick={()=> setSearchScreen(true)} className="sm:m-2">Search</button>
+        </nav>
         {exportScreen && 
                 <div className="fixed inset-0 flex items-center justify-center p-4 bg-black z-50">
                 <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
@@ -212,6 +212,7 @@ function SelectV2() {
                     <p className="m-5">Search Order</p>
                     <input type="text" value={searchOrder} onChange={(e) => setSearchOrder(e.target.value)} />
                     <button onClick={search} className="m-2 p-3">Search</button>
+                    <button onClick={()=> setSearchScreen(false)} className="m-2 p-3">Close</button>
                     </div>
                  
 
@@ -223,7 +224,7 @@ function SelectV2() {
                 
             </div>
             
-            <div className="flex items-center space-x-2 justify-center mt-20">
+            {/* <div className="flex items-center space-x-2 justify-center mt-20">
             <label htmlFor="simpleCheckbox" className="text-gray-700 select-none ">
                 Bag Id required?
             </label>
@@ -235,7 +236,7 @@ function SelectV2() {
                 className="w-4 h-4 text-blue-600 bg-gray-100 rounded border-gray-300 focus:ring-blue-500"
             />
 
-        </div>
+            </div> */}
 
         <div className="flex flex-col h-[60vh] justify-around">
         <div className="flex flex-col p-4 space-y-4">
@@ -325,7 +326,7 @@ function SelectV2() {
             <div>
                 
                 <button onClick={find} className="m-3">Find</button>
-                <button onClick={refreshOrders} className="m-3">Refresh Orders</button>
+                <button onClick={()=>setUpadteLoading(true)} className="m-3">Refresh Orders</button>
                 {upadteLoading && (
                 <div className="fixed inset-0 flex items-center justify-center p-4 bg-black z-50">
                 <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
@@ -335,8 +336,12 @@ function SelectV2() {
                         <p className="m-5">Update from</p>
                         <input type="text" value={updateFrom} onChange={(e) => setUpdateFrom(e.target.value)} />
                         <button onClick={update} className="m-5">Update</button>
+                        <button onClick={()=>setUpadteLoading(false)} className="m-5">Close</button>
                         {data != null ? (
-                            <p>Last Refreshed : {data.lastRefreshed}</p>
+                            <div>
+                                <p>Last Refreshed : {data.lastRefreshed}</p>
+                                <p>Updated Till : {data.maxOrder}</p>
+                            </div>
                         ) : (
                             <p>No data available</p>
                         )}

@@ -85,6 +85,9 @@ const ordersSchema = new mongoose.Schema({
   },
   assignedTo : {
     type : String
+  },
+  customerPhoneNumber : {
+    type : Number
   }
   
 });

@@ -16,7 +16,7 @@ const loginZod = zod.object({
 
 router.post('/checkToken', async (req, res) => {
     const token = req.body.token;
-    console.log(token);
+    // console.log(token);
     if (!token){
         res.status(201).json({ message: "Invalid token" , statusNum: 0});
         return;

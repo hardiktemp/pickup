@@ -12,6 +12,14 @@ declare module 'express-serve-static-core' {
   }
 }
 
+function standardizePhoneNumber(phone: string): string | null {
+    if (!phone) {
+        return null;
+    }
+    phone = phone.replace(/\D/g, '');
+    return phone.slice(-10);
+}
+
 const SHOPIFY_API_KEY = process.env.SHOPIFY_API_KEY;
 
 const router = Express.Router();
@@ -45,7 +53,7 @@ router.post('/order',authMiddleware, async (req, res) => {
         assignedTo : "null"
     };
     let order : any = {};
-    let assignedOrders = await Order.find({assignedTo: req.phoneNumber});
+    let assignedOrders = await Order    .find({assignedTo: req.phoneNumber});
     if (assignedOrders){
         for (const assignedOrder of assignedOrders){
             console.log("Unassigning order", assignedOrder.orderNo);
@@ -208,6 +216,9 @@ router.post("/updateOrders2", async (req, res) => {
                 
                 const prepaid = order.financial_status === "paid" || order.financial_status === "partially_refunded" || order.financial_status === "partially_paid" ? true : false
                 const paymentStatus = prepaid ? "Prepaid" : "COD";
+                let customerPhoneNumber = order.shipping_address.phone || order.billing_address.phone || null;
+                customerPhoneNumber = standardizePhoneNumber(customerPhoneNumber);
+
                 let productArr = [];
                 for (const lineItem of order.line_items){
                     let productD = {
@@ -243,7 +254,8 @@ router.post("/updateOrders2", async (req, res) => {
                     fulfilledOn : fulfilledOn,
                     orderedAt : order.created_at,
                     labelPrinted: labelPrinted,
-                    assignedTo : "null"
+                    assignedTo : "null",
+                    customerPhoneNumber:customerPhoneNumber
                 });
                 try {
                     await newOrder.save();
@@ -425,12 +437,20 @@ router.post("/search", async (req, res) => {
 })
 
 
-router.post("/data", async (req, res) => {
-    const orders = await Order.find({status: "pending", assignedTo : "null",fulfilledOn : "null"});
-    console.log(orders.length);
-    let defaultOrder = await Variable.findOne({id : 1});
-    console.log(defaultOrder);
-    res.status(200).json({len : orders.length , defaultOrder : defaultOrder.startId , lastRefreshed : defaultOrder.lastRefreshed});
+router.post("/data", authMiddleware,  async (req, res) => {
+    const [ordersCount, defaultOrder, maxOrder] = await Promise.all([
+        Order.countDocuments({ status: "pending", assignedTo: "null", fulfilledOn: "null" }),
+        Variable.findOne({ id: 1 }),
+        Order.findOne({}).sort({ orderNo: -1 }).select('orderNo')
+      ]);
+      
+      console.log(ordersCount, defaultOrder, maxOrder);
+    res.status(200).json({  len : ordersCount,
+                            defaultOrder : defaultOrder.startId,
+                            lastRefreshed : defaultOrder.lastRefreshed,
+                            phone : req.phoneNumber,
+                            maxOrder : maxOrder? maxOrder.orderNo : 0  
+                        });
 });
 
 
