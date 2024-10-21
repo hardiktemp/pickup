@@ -29,7 +29,6 @@ const productSubmitZod = zod.object({
     status: zod.enum(["completed", "skipped" , "manualComplete"]),
 });
 
-
 router.post('/order',authMiddleware, async (req, res) => {
     console.log(req.body);
 
@@ -53,7 +52,7 @@ router.post('/order',authMiddleware, async (req, res) => {
         assignedTo : "null"
     };
     let order : any = {};
-    let assignedOrders = await Order    .find({assignedTo: req.phoneNumber});
+    let assignedOrders = await Order.find({assignedTo: req.phoneNumber});
     if (assignedOrders){
         for (const assignedOrder of assignedOrders){
             console.log("Unassigning order", assignedOrder.orderNo);
@@ -115,32 +114,34 @@ router.post('/order',authMiddleware, async (req, res) => {
         const orderDetails = await axios.get(`https://${SHOPIFY_API_KEY}/admin/api/2024-04/orders/${orderId}.json`);
 
         const lineItems = orderDetails.data.order.line_items;
-
-        for (const lineItem of lineItems) {
+        const productPromises = lineItems.map(async (lineItem) => {
             const productId = lineItem.product_id;
-            if (productId === null) {
-                continue;
+            if (productId === null || lineItem.current_quantity === 0) {
+                return null;
             }
-            const currernt_quantity = lineItem.current_quantity;
-            if (currernt_quantity === 0) {
-                continue;
+        
+            try {
+                const productResponse = await axios.get(`https://${SHOPIFY_API_KEY}/admin/api/2024-04/products/${productId}.json`);
+                const product = productResponse.data.product;
+        
+                const p = order.productStatus.find((productStatus) => productStatus.productId == productId);
+        
+                return {
+                    name: product.title,
+                    productId: lineItem.product_id,
+                    sku: lineItem.sku,
+                    quantity: lineItem.current_quantity,
+                    image: product.image?.src || "null",
+                    completionStatus: p ? p.completionStatus : "unknown"
+                };
+            } catch (error) {
+                console.error(`Error fetching product with ID ${productId}:`, error);
+                return null;
             }
-            const product = await axios.get(`https://${SHOPIFY_API_KEY}/admin/api/2024-04/products/${productId}.json`);
-
-            const p = (order.productStatus).find((product) => {
-                return product.productId == lineItem.product_id
-            });
-
-            products.push({
-                name: product.data.product.title,
-                productId: lineItem.product_id,
-                sku: lineItem.sku,
-                quantity: currernt_quantity,
-                image: product.data.product.image !== null && product.data.product.image.src !== null ? product.data.product.image.src : "null",
-                completionStatus: p.completionStatus
-            });
-
-        }
+        });
+        
+        products = (await Promise.all(productPromises)).filter(product => product !== null);
+        
         if (products.length > 0){
             break;
         }else{
@@ -163,7 +164,6 @@ router.post('/order',authMiddleware, async (req, res) => {
     console.log("orderNo" , data.orderId);
     res.status(200).json(data);
 })
-
 
 router.post("/updateOrders2", async (req, res) => {
     console.log("updateOrders2");    

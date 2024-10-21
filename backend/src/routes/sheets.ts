@@ -32,9 +32,11 @@ router.post('/update', async (req, res) => {
     });
     str = str.slice(0, -1);
     data.push([str,count-1]);
-    appendToSheet("16GeK7HF6FatEAhsyUCKCZdxyROdpyCF6LbWbllLuMTk", "AppLabels!A1", data);
-
-    await Order.updateMany({ labelPrinted: false, status: { $in: ["completed", "manualComplete"] } }, { labelPrinted: true })
+    const result = await appendToSheet("16GeK7HF6FatEAhsyUCKCZdxyROdpyCF6LbWbllLuMTk", "AppLabels!A1", data);
+    if (result){
+        await Order.updateMany({ labelPrinted: false, status: { $in: ["completed", "manualComplete"] } }, { labelPrinted: true })
+    }
+    
 
     res.status(200).json({ status : 200 , message: "Data updated successfully" });
 
@@ -80,10 +82,11 @@ router.post("/updateSkipped", async (req, res) => {
     });
     console.log(data);
     try {
-        await appendToSheet("16GeK7HF6FatEAhsyUCKCZdxyROdpyCF6LbWbllLuMTk", "AppSkipped!A1", data);
-        
-        await Order.updateMany({ status: "skipped", skipExported: false }, { skipExported: true, labelPrinted: true, status: "manualComplete" });
-        console.log("Order status updated successfully.");
+        const result = await appendToSheet("16GeK7HF6FatEAhsyUCKCZdxyROdpyCF6LbWbllLuMTk", "AppSkipped!A1", data);
+        console.log("res",res);
+        if(result){
+            await Order.updateMany({ status: "skipped", skipExported: false }, { skipExported: true, labelPrinted: true, status: "manualComplete" });
+        }
     } catch (error) {
         console.error("Error occurred:", error);
     }

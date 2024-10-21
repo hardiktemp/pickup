@@ -24,7 +24,7 @@ const sheets = google.sheets({ version: 'v4', auth });
 
 const appendToSheet = async (spreadsheetId: string, range: string, values: any[][]) => {
   try {
-    await sheets.spreadsheets.values.append({
+    const resultSheets = await sheets.spreadsheets.values.append({
       spreadsheetId,
       range,
       valueInputOption: 'RAW',
@@ -32,9 +32,16 @@ const appendToSheet = async (spreadsheetId: string, range: string, values: any[]
         values,
       },
     });
-    console.log('Data successfully appended');
+    if (resultSheets.status === 200) {
+      console.log('Data successfully appended');
+      return true;
+    } else {
+      console.log('Error appending data:', resultSheets.statusText);
+      return false;
+    }
   } catch (error) {
     console.error('Error appending data:', error);
+    return false;
   }
 };
 
