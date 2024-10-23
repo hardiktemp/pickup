@@ -70,7 +70,7 @@ router.post("/updateSkipped", async (req, res) => {
                     return order.skipReason;
                 
                 case "Phone Number":
-                    return order.customerPhoneNumber;
+                    return order.customerPhoneNumber || " ";
                 
                 default:
                     return ""; 
