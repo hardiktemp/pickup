@@ -62,4 +62,3 @@ To run the application locally, follow these steps:
      ```bash
      nodemon backend/dist/index.js
      ```
-u need further details or adjustments!
