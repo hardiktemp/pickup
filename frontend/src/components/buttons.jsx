@@ -228,9 +228,13 @@ const Buttons = () => {
                     Close
                     </button>
                 </div>
-                <button onClick={forceComplete} className="absolute top-5 right-3 p-1">
-                        Force Complete
-                </button>
+                {
+                    orderDetailsData.status =="skipped"  &&
+                    <button onClick={forceComplete} className="absolute top-5 right-3 p-1">
+                        Force complete
+                    </button>
+                }
+                
                 </div>
             )}
         </>

@@ -7,7 +7,7 @@ dotenv.config();
 const router = Express.Router();
 
 router.post('/update', async (req, res) => {
-    const orders = await Order.find({ labelPrinted: false, status: { $in: ["completed", "manualComplete"] } });
+    const orders = await Order.find({ labelPrinted: false, status: { $in: ["completed"] } });
     // console.log(orders);
     // const orders = [];
     // for (let i = 0 ; i<1000 ; i++){
@@ -17,7 +17,7 @@ router.post('/update', async (req, res) => {
     //     orders.push(order)
     // }
     let data = [];
-    let count = 1;
+    let count = 0;
     let str = ""
     orders.forEach((order) => {
         count++ 
@@ -25,16 +25,16 @@ router.post('/update', async (req, res) => {
         if (count == 500){
             str = str.slice(0, -1);
             console.log(str);
-            data.push([str,count-1]);
+            data.push([str,count]);
             str = ""
-            count = 1;
+            count = 0;
         }
     });
     str = str.slice(0, -1);
-    data.push([str,count-1]);
+    data.push([str,count]);
     const result = await appendToSheet("16GeK7HF6FatEAhsyUCKCZdxyROdpyCF6LbWbllLuMTk", "AppLabels!A1", data);
     if (result){
-        await Order.updateMany({ labelPrinted: false, status: { $in: ["completed", "manualComplete"] } }, { labelPrinted: true })
+        await Order.updateMany({ labelPrinted: false, status: { $in: ["completed"] } }, { labelPrinted: true })
     }
     
 
@@ -44,7 +44,7 @@ router.post('/update', async (req, res) => {
 });
 
 router.post("/updateSkipped", async (req, res) => {
-    const orders = await Order.find({ status : "skipped" , skipExported : false });
+    const orders = await Order.find({ status: { $in: ["skipped", "manualComplete"] }, skipExported : false });
 
     let data = [];
 
@@ -67,7 +67,7 @@ router.post("/updateSkipped", async (req, res) => {
                     return missingItems;
     
                 case "SkipReason":
-                    return order.skipReason;
+                    return order.skipReason || "manualComplete";
                 
                 case "Phone Number":
                     return order.customerPhoneNumber || " ";
@@ -83,9 +83,8 @@ router.post("/updateSkipped", async (req, res) => {
     console.log(data);
     try {
         const result = await appendToSheet("16GeK7HF6FatEAhsyUCKCZdxyROdpyCF6LbWbllLuMTk", "AppSkipped!A1", data);
-        console.log("res",res);
         if(result){
-            await Order.updateMany({ status: "skipped", skipExported: false }, { skipExported: true, labelPrinted: true, status: "manualComplete" });
+            await Order.updateMany({ status: { $in: ["skipped", "manualComplete"] }, skipExported: false }, { skipExported: true, labelPrinted: true, status: "manualComplete" });
         }
     } catch (error) {
         console.error("Error occurred:", error);

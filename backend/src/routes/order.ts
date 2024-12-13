@@ -63,20 +63,13 @@ router.post('/order',authMiddleware, async (req, res) => {
     }
     let retryCount = 0;
     let products : any = [];
-    while(retryCount < 5){
+    while(retryCount < 100){
         if (req.body.orderType === "Prepaid" || req.body.orderType === "Postpaid" || req.body.orderType === "Both") {
             query.fulfilledOn = "null";
 
-            let assignedOrders = await Order.findOne({assignedTo: req.phoneNumber});
-            if (assignedOrders){    
-                console.log("Unassigning order", assignedOrders.orderNo);
-                assignedOrders.assignedTo = "null";
-                await assignedOrders.save();
-            }
-
             if (req.body.yesterday == 'true') {
                 const now = new Date();
-                const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 23, 29, 0);
+                const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 23, 59, 59);
                 console.log("yesterdayMidnight",yesterday.toISOString());
                 query.orderedAt = { $lt : yesterday.toISOString() }
                 
@@ -150,12 +143,12 @@ router.post('/order',authMiddleware, async (req, res) => {
             orderToCancel.fulfilledOn = "cancelled";
             await orderToCancel.save();
             retryCount++;
-            
         }
     }
 
     const data = {
         orderId : order.orderNo,
+        status : order.status,
         products : products,
         paymentStatus: order.paymentStatus,
         skipReason: order.skipReason ? order.skipReason : null
@@ -200,13 +193,8 @@ router.post("/updateOrders2", async (req, res) => {
         response =  await axios.get(`https://${SHOPIFY_API_KEY}/admin/api/2024-04/orders.json?limit=250&since_id=${nextid}&status=any`)
         if (response.data.orders.length === 0){
             moreOrders = false;
-        }else{
-            nextid = response.data.orders[response.data.orders.length-1].id;            
-            nextid = response.data.orders[response.data.orders.length-1].id;            
-            console.log(response.data.orders[response.data.orders.length-1].id);
-            console.log(nextid);
+        }else{          
             nextid = response.data.orders[response.data.orders.length-1].id;
-            console.log(response.data.orders[response.data.orders.length-1].id);
             console.log(nextid);
         }
         
@@ -328,7 +316,7 @@ router.post('/submit', authMiddleware ,  async (req, res) => {
     order.fulfillmentTime = new Date();
     order.assignedTo = "null";
     let saveSuccess = false;
-    const maxSaveRetries = 3;
+    const maxSaveRetries = 5;
     let retryCount = 0;
 
     while (!saveSuccess && retryCount < maxSaveRetries) {
