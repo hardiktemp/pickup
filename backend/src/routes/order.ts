@@ -416,7 +416,7 @@ router.post("/search", async (req, res) => {
         return res.status(200).json({pending : true , skipped : false , orderNo : order.orderNo});
 
     }
-    else if (order.fulfilledOn === "null" && order.status === "skipped") {
+    else if (order.fulfilledOn === "null" && order.status === "skipped" && order.skipExported === false) {
         return res.status(200).json({pending : true , skipped : true , orderNo : order.orderNo});
     }
     else{

@@ -84,7 +84,7 @@ router.post("/updateSkipped", async (req, res) => {
     try {
         const result = await appendToSheet("16GeK7HF6FatEAhsyUCKCZdxyROdpyCF6LbWbllLuMTk", "AppSkipped!A1", data);
         if(result){
-            await Order.updateMany({ status: { $in: ["skipped", "manualComplete"] }, skipExported: false }, { skipExported: true, labelPrinted: true, status: "manualComplete" });
+            await Order.updateMany({ status: { $in: ["skipped", "manualComplete"] }, skipExported: false }, { skipExported: true, labelPrinted: true, status: "manualComplete" , fulfilledOn : "app" });
         }
     } catch (error) {
         console.error("Error occurred:", error);
