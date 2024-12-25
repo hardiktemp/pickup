@@ -431,8 +431,16 @@ router.post("/data", authMiddleware,  async (req, res) => {
         Variable.findOne({ id: 1 }),
         Order.findOne({}).sort({ orderNo: -1 }).select('orderNo')
       ]);
-      
-      console.log(ordersCount, defaultOrder, maxOrder);
+    let assignedOrders = await Order.find({assignedTo: req.phoneNumber});
+    if (assignedOrders){
+        for (const assignedOrder of assignedOrders){
+            console.log("Unassigning order", assignedOrder.orderNo);
+            
+            assignedOrder.assignedTo = "null";
+            await assignedOrder.save();
+        }
+    } 
+    console.log(ordersCount, defaultOrder, maxOrder);
     res.status(200).json({  len : ordersCount,
                             defaultOrder : defaultOrder.startId,
                             lastRefreshed : defaultOrder.lastRefreshed,
